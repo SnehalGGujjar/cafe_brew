@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Pay by QR{% endblock %}
+
+{% block content %}
+<div class="ai-card text-center">
+  <h4 class="mb-2">Scan to Pay</h4>
+  <p class="text-muted mb-1">Order #{{ order.id }} — Total: <strong>₹ {{ order.total }}</strong></p>
+
+  {% if qr_img_url %}
+    <!-- Admin QR (preferred) with fallback to base64 if you pass qr_b64) -->
+    <div class="my-3">
+      <img src="{{ qr_img_url }}"
+           alt="Payment QR"
+           width="240" height="240"
+           class="rounded shadow-sm"
+           onerror="if('{{ qr_b64|default:'' }}'){ this.onerror=null; this.src='{{ qr_b64 }}'; }">
+    </div>
+  {% elif qr_b64 %}
+    <!-- Server-generated base64 QR fallback -->
+    <div class="my-3">
+      <img src="{{ qr_b64 }}" alt="Payment QR" width="240" height="240" class="rounded shadow-sm">
+    </div>
+  {% else %}
+    <!-- Last resort: client-side QR from status URL (works offline if you keep it) -->
+    <div id="qrcode" class="my-3 d-flex justify-content-center align-items-center" style="min-height:250px;">
+      <div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading QR...</span></div>
+    </div>
+    <script>
+      (function(){
+        const el = document.getElementById('qrcode');
+        const qrText = "{% url 'payments:status' payment.uuid %}";
+        const url = "https://chart.googleapis.com/chart?chs=240x240&cht=qr&chl=" + encodeURIComponent(qrText);
+        const img = new Image();
+        img.src = url; img.alt = "QR Code"; img.width = 240; img.height = 240; img.className="rounded shadow-sm";
+        img.onload = () => { el.innerHTML=''; el.appendChild(img); };
+        img.onerror = () => { el.innerHTML = '<div class="alert alert-warning">QR unavailable.</div>'; };
+      })();
+    </script>
+  {% endif %}
+
+  <!-- Live payment status -->
+  <div class="mt-3">
+    <span id="payStatus" class="badge rounded-pill text-bg-secondary px-3 py-2">Checking status…</span>
+    <div class="small text-muted mt-2">This page updates automatically after payment.</div>
+  </div>
+
+  <!-- Tiny backup link only if you still want it (optional) -->
+
+
+  <!-- {% if qr_text %}
+    <div class="mt-3">
+      <a class="small link-secondary" href="{{ qr_text }}" target="_blank">Backup: open payment page</a>
+    </div>
+  {% endif %} -->
+</div>
+
+<script>
+  // Poll /payments/status/<uuid> every 4s
+  const statusUrl = "{% url 'payments:status' payment.uuid %}?init=1";
+  const badge = document.getElementById('payStatus');
+
+  const COLORS = {
+    initiated: 'text-bg-info',
+    pending: 'text-bg-warning',
+    processing: 'text-bg-warning',
+    paid: 'text-bg-success',
+    completed: 'text-bg-success',
+    failed: 'text-bg-danger',
+    cancelled: 'text-bg-dark',
+    unknown: 'text-bg-secondary'
+  };
+
+  function setBadge(text, key){
+    // reset classes
+    badge.className = 'badge rounded-pill px-3 py-2 ' + (COLORS[key] || COLORS.unknown);
+    badge.textContent = text;
+  }
+
+  async function poll(){
+    try{
+      const r = await fetch(statusUrl, {headers: {'Accept':'application/json'}});
+      const j = await r.json();
+      const st = (j.status || 'unknown').toLowerCase();
+
+      if (st === 'paid' || st === 'completed' || st === 'confirmed'){
+        setBadge('Payment received', 'paid');
+        // redirect to thanks page
+        window.location.href = "{% url 'orders:thanks' order.id %}";
+        return; // stop polling
+      } else if (st === 'failed' || st === 'cancelled'){
+        setBadge('Payment failed/cancelled', st);
+      } else if (st === 'initiated' || st === 'pending' || st === 'processing'){
+        setBadge(`Awaiting payment… (${st})`, st);
+      } else {
+        setBadge('Checking status…', 'unknown');
+      }
+    } catch(e){
+      setBadge('Network issue — retrying…', 'unknown');
+    } finally {
+      setTimeout(poll, 4000);
+    }
+  }
+  poll();
+</script>
+{% endblock %}

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cozy Brew Café{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <style>
+        body {
+            /* Background image for the body */
+            background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Playfair Display', serif;
+            color: #3c2f2f;
+            position: relative;
+            margin: 0;
+        }
+
+        /* Add a semi-transparent overlay with blur effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(246, 248, 251, 0.7); /* Semi-transparent light overlay */
+            backdrop-filter: blur(5px); /* Subtle blur effect */
+            z-index: -1; /* Behind all content */
+        }
+
+        /* Navbar Styling */
+        .navbar {
+            background-color: #3c2f2f;
+        }
+        .navbar-brand, .nav-link {
+            color: #fff !important;
+            font-size: 1.2rem;
+        }
+        .nav-link:hover {
+            color: #d4a373 !important;
+        }
+
+        /* Carousel Section */
+        .carousel-item {
+            height: 500px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .carousel-caption {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            bottom: 20%;
+            animation: fadeInUp 1s ease-in-out;
+        }
+        .carousel-caption h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .carousel-caption p {
+            font-size: 1.2rem;
+            color: #f8f9fa;
+        }
+
+        /* About Section */
+        .about-section {
+            padding: 5rem 2rem;
+            text-align: center;
+            background-color: #fff; /* Solid background for readability */
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+            margin: 2rem auto;
+            max-width: 900px;
+        }
+        .ai-card {
+            padding: 1.25rem;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+        .about-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: #3c2f2f;
+        }
+        .about-section p {
+            font-size: 1.2rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Menu Section */
+        .menu {
+            padding: 5rem 2rem;
+            background-color: #f5e9d4; /* Warm beige for contrast */
+            text-align: center;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
+        .menu h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        .menu-item {
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .menu-item:hover {
+            transform: translateY(-5px);
+        }
+        .menu-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .menu-item p {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #3c2f2f;
+            color: #fff;
+            text-align: center;
+            padding: 2rem;
+        }
+        footer p {
+            font-size: 1rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .carousel-caption h1 {
+                font-size: 2rem;
+            }
+            .carousel-caption p {
+                font-size: 1rem;
+            }
+            .about-section h2, .menu h2 {
+                font-size: 2rem;
+            }
+            .carousel-item {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">Cozy Brew Café</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'menu:today' %}">Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:about' %}">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:team' %}">Team</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        {% if messages %}
+            <div class="mb-3">
+                {% for m in messages %}
+                    <div class="alert alert-{{ m.tags }}">{{ m }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}
+            <!-- Carousel Section -->
+            <div id="cafeCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop');">
+                        <div class="carousel-caption">
+                            <h1>Welcome to Cozy Brew Café</h1>
+                            <p>Experience the finest coffee and cuisine in a cozy, modern setting.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=2078&auto=format&fit=crop');">
+                        <div class="carousel-caption">
+                            <h1>Delicious Moments Await</h1>
+                            <p>Order effortlessly with our QR-based system and savor every bite.</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1493857671505-72967e2e2760?q=80&w=2070&auto=format&fit=crop');">
+                        <div class="carousel-caption">
+                            <h1>Our Passion, Your Pleasure</h1>
+                            <p>Discover handcrafted beverages and meals made with love.</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#cafeCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#cafeCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+
+            <!-- About Section -->
+            <section class="about-section">
+                <div class="ai-card">
+                    <h2>About Cozy Brew Café</h2>
+                    <p>
+                        At Cozy Brew Café, we blend tradition with innovation. Enjoy freshly brewed coffee, artisanal pastries, and gourmet meals in a warm, inviting atmosphere. Our QR-based ordering system lets you explore our menu, place orders, and pay with ease—all from your table. Join us for a unique dining experience that combines quality, convenience, and community.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Menu Section -->
+            <section class="menu">
+                <h2>Our Menu</h2>
+                <div class="menu-grid">
+                    <div class="menu-item">
+                        <h3>Artisan Coffee</h3>
+                        <p>Rich, aromatic blends brewed to perfection.</p>
+                    </div>
+                    <div class="menu-item">
+                        <h3>Fresh Pastries</h3>
+                        <p>Flaky croissants and decadent cakes baked daily.</p>
+                    </div>
+                    <div class="menu-item">
+                        <h3>Breakfast Bowls</h3>
+                        <p>Healthy and hearty options to start your day.</p>
+                    </div>
+                    <div class="menu-item">
+                        <h3>Specialty Teas</h3>
+                        <p>A curated selection of soothing herbal teas.</p>
+                    </div>
+                </div>
+            </section>
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Cozy Brew Café. All Rights Reserved.</p>
+    </footer>
+
+    <!-- CSRF Script -->
+    <script>
+        function getCsrf() {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if meta && meta.content) return meta.content;
+            const match = document.cookie.match(/(?:^|;)\s*csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Pay{% endblock %}
+{% block content %}
+<div class="ai-card">
+  <h4>Payment</h4>
+  <p>Status: <span class="badge bg-warning text-dark">{{ payment.status }}</span></p>
+  <p>Amount: <strong>₹ {{ payment.amount }}</strong></p>
+  <p class="text-muted">Ask a staff member to confirm payment after you have paid digitally at the counter.</p>
+  {% if request.user.is_staff %}
+  <a class="btn btn-success" href="{% url 'payments:confirm' payment.uuid %}">Confirm Payment</a>
+  {% else %}
+  <div class="alert alert-info">Staff-only confirmation button appears when logged in.</div>
+  {% endif %}
+</div>
+{% endblock %}

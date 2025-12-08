@@ -1,0 +1,21 @@
+/* Round corners + softer colors */
+:root {
+  --admin-accent: #2563eb; /* brand blue */
+}
+
+#header, .module caption { background: #0f172a; }
+#header { border-bottom: 1px solid rgba(255,255,255,.1); }
+#branding a, #user-tools { color: #e5e7eb !important; }
+
+.module caption { color: #e5e7eb; }
+a.button, .button.default {
+  background: var(--admin-accent);
+  border: none;
+  border-radius: 8px;
+}
+.app-auth.module, .app-menu.module, .app-orders.module,
+.app-payments.module, .app-core.module, .app-inventory.module {
+  border-radius: 12px;
+  overflow: hidden;
+}
+#content { max-width: 1200px; }

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}About Cozy Brew Café{% endblock %}
+
+{% block content %}
+    <!-- About Header -->
+    <section class="about-header" style="padding: 5rem 2rem; text-align: center; background-color: #fff; border-radius: 16px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06); margin: 2rem auto; max-width: 900px;">
+        <div class="ai-card">
+            <h1 style="font-size: 3rem; margin-bottom: 1.5rem; color: #3c2f2f;">Our Story</h1>
+            <p style="font-size: 1.2rem; color: #555; line-height: 1.6;">
+                Founded in 2020, Cozy Brew Café was born from a passion for exceptional coffee and community connection. Our founders, a group of local artisans, envisioned a space where quality meets convenience. Nestled in the heart of the city, our café combines the warmth of traditional coffee-making with modern technology, offering a seamless QR-based ordering experience.
+            </p>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="mission-section" style="padding: 5rem 2rem; text-align: center; background-color: #f5e9d4; border-radius: 16px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06); margin: 2rem auto; max-width: 900px;">
+        <div class="ai-card">
+            <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: #3c2f2f;">Our Mission</h2>
+            <p style="font-size: 1.2rem; color: #555; line-height: 1.6;">
+                At Cozy Brew Café, we strive to create moments of joy through handcrafted beverages and gourmet meals. Our commitment to sustainability means we source beans and ingredients locally, supporting farmers and reducing our carbon footprint. Our innovative QR-based ordering system ensures a hassle-free experience, letting you focus on what matters—enjoying great food and great company.
+            </p>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section" style="padding: 3rem 2rem; text-align: center;">
+        <a href="{% url 'menu:today' %}" class="btn">Explore Our Menu</a>
+    </section>
+{% endblock %}

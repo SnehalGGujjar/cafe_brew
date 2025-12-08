@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Thank you{% endblock %}
+{% block content %}
+<div class="ai-card text-center">
+  <h3>Thank you!</h3>
+  <p>Your payment was confirmed. Order #{{ order_id }} is being prepared. A bill has been emailed.</p>
+
+  <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#feedbackModal">
+    Leave feedback
+  </button>
+  <a class="btn btn-outline-secondary mt-2" href="{% url 'menu:today' %}">Order again</a>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Rate your experience</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="feedbackForm">
+          <input type="hidden" name="order_id" value="{{ order_id }}">
+          <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <select name="rating" class="form-select" required>
+              <option value="">Select</option>
+              <option value="5">★★★★★ — Loved it</option>
+              <option value="4">★★★★☆ — Good</option>
+              <option value="3">★★★☆☆ — Okay</option>
+              <option value="2">★★☆☆☆ — Poor</option>
+              <option value="1">★☆☆☆☆ — Bad</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Comments (optional)</label>
+            <textarea name="comment" class="form-control" rows="3" maxlength="2000" placeholder="What did we do well? What could be better?"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email (optional)</label>
+            <input type="email" name="email" class="form-control" placeholder="you@example.com">
+            <div class="form-text">We may contact you about your feedback.</div>
+          </div>
+        </form>
+        <div id="fbAlert" class="alert d-none mt-2" role="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="fbSubmit" type="button" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCsrf(){
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta && meta.content) return meta.content;
+  const m = document.cookie.match(/(?:^|;)\s*csrftoken=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+const fbBtn = document.getElementById('fbSubmit');
+const fbForm = document.getElementById('feedbackForm');
+const fbAlert = document.getElementById('fbAlert');
+
+fbBtn?.addEventListener('click', async () => {
+  const fd = new FormData(fbForm);
+  fbBtn.disabled = true; fbBtn.innerText = 'Submitting...';
+  fbAlert.classList.add('d-none');
+
+  try {
+    const r = await fetch('/feedback/submit/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrf() },
+      body: fd
+    });
+    const j = await r.json();
+    if (j.ok){
+      fbAlert.className = 'alert alert-success';
+      fbAlert.textContent = 'Thanks for your feedback!';
+      fbAlert.classList.remove('d-none');
+      setTimeout(() => location.href = "{% url 'menu:today' %}", 1000);
+    } else {
+      fbAlert.className = 'alert alert-danger';
+      fbAlert.textContent = 'Error: ' + (j.error || 'unknown');
+      fbAlert.classList.remove('d-none');
+    }
+  } catch (e) {
+    fbAlert.className = 'alert alert-danger';
+    fbAlert.textContent = 'Network error: ' + e;
+    fbAlert.classList.remove('d-none');
+  } finally {
+    fbBtn.disabled = false; fbBtn.innerText = 'Submit';
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-4"><div class="ai-card"><div class="text-muted">Total Orders</div><div class="display-6">{{ total_orders }}</div></div></div>
+  <div class="col-md-4"><div class="ai-card"><div class="text-muted">Revenue</div><div class="display-6">₹ {{ revenue }}</div></div></div>
+</div>
+<div class="ai-card mt-3">
+  <h5 class="mb-3">Top 5 Items</h5>
+  <canvas id="topChart" height="120"></canvas>
+</div>
+<script>
+const ctx = document.getElementById('topChart');
+new Chart(ctx, { type: 'bar', data: { labels: {{ top_labels|safe }}, datasets: [{ label: 'Qty Sold', data: {{ top_values|safe }} }]}, options: { responsive: true, plugins: { legend: { display: false } } } });
+</script>
+{% endblock %}

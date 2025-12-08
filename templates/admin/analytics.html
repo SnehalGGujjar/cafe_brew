@@ -1,0 +1,111 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+{% block extrastyle %}
+  <style>
+    .kpi{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px}
+    .kpi h6{margin:0;color:#6b7280;font-weight:600}
+    .kpi .num{font-size:24px;font-weight:700;margin-top:4px}
+    .card-like{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px}
+    .text-end{text-align:right}
+  </style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h1>Analytics (last 30 days)</h1>
+
+  <div style="display:grid;grid-template-columns:repeat(4, minmax(180px,1fr));gap:16px">
+    <div class="kpi"><h6>Revenue</h6><div class="num">₹ {{ kpis.revenue|default:0|floatformat:0|intcomma }}</div></div>
+    <div class="kpi"><h6>Orders</h6><div class="num">{{ kpis.orders|default:0|intcomma }}</div></div>
+    <div class="kpi"><h6>Unique Customers</h6><div class="num">{{ kpis.users|default:0|intcomma }}</div></div>
+    <div class="kpi"><h6>Avg Order Value</h6><div class="num">₹ {{ kpis.aov|default:0|floatformat:0|intcomma }}</div></div>
+  </div>
+
+  <br/>
+
+  <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px">
+    <div class="card-like">
+      <h3 style="margin-top:0">Revenue & Orders by Day</h3>
+      <canvas id="revOrders"></canvas>
+    </div>
+    <div class="card-like">
+      <h3 style="margin-top:0">Top Categories (sales)</h3>
+      <canvas id="catSales"></canvas>
+    </div>
+  </div>
+
+  <br/>
+
+  <div class="card-like">
+    <h3 style="margin-top:0">Top Items</h3>
+    <div style="overflow:auto">
+      <table class="table">
+        <thead>
+          <tr><th>#</th><th>Item</th><th class="text-end">Qty</th><th class="text-end">Sales (₹)</th></tr>
+        </thead>
+        <tbody>
+        {% for r in top_items %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ r.item__name }}</td>
+            <td class="text-end">{{ r.total_qty|default:0|intcomma }}</td>
+            <td class="text-end">{{ r.sales|default:0|floatformat:0|intcomma }}</td>
+              
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">No data.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{{ by_day|json_script:"by-day-data" }}
+{{ top_categories|json_script:"cat-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script>
+  const byDay = JSON.parse(document.getElementById('by-day-data')?.textContent || '[]');
+  const catData = JSON.parse(document.getElementById('cat-data')?.textContent || '[]');
+
+  // Revenue & Orders by Day
+  (function(){
+    const ctx = document.getElementById('revOrders');
+    if(!ctx) return;
+    const labels = byDay.map(d => d.day);
+    const revenue = byDay.map(d => d.day_revenue || 0);
+    const orders = byDay.map(d => d.day_orders || 0);
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Revenue (₹)', data: revenue, yAxisID:'y1' },
+          { label: 'Orders', data: orders, yAxisID:'y2' }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode:'index', intersect:false },
+        scales: {
+          y1: { type:'linear', position:'left', ticks:{ beginAtZero:true }},
+          y2: { type:'linear', position:'right', grid:{ drawOnChartArea:false }, ticks:{ beginAtZero:true }}
+        }
+      }
+    });
+  })();
+
+  // Category Sales
+  (function(){
+    const ctx = document.getElementById('catSales');
+    if(!ctx) return;
+    const labels = catData.map(d => (d.item__category || '—'));
+    const sales = catData.map(d => d.sales || 0);
+    new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Sales (₹)', data:sales }] },
+      options: { responsive:true, scales:{ y:{ beginAtZero:true } } }
+    });
+  })();
+</script>
+{% endblock %}

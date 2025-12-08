@@ -1,0 +1,10 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Staff Login</h1>
+<form method="post">{% csrf_token %}
+  <div><label>Username</label><input type="text" name="username" class="vTextField"></div>
+  <div><label>Password</label><input type="password" name="password" class="vTextField"></div>
+  <button class="button">Login</button>
+  <p><a href="{% url 'accounts:forgot' %}">Forgot password?</a></p>
+</form>
+{% endblock %}

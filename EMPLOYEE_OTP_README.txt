@@ -1,0 +1,4 @@
+- Use `python manage.py setup_roles` to create the 'employee' group with sensible permissions.
+- Create a user for employees, assign them to 'employee' group and mark `is_staff=True` (not superuser).
+- Staff (superuser or employee) login at /accounts/login/ requires OTP delivered via email (console backend in dev).
+- Customers can scan QR that points to /core/scan/<CODE>/ (e.g., https://example.com/core/scan/T1). This stores the table in session and opens the menu to order.

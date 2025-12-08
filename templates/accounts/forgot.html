@@ -1,0 +1,9 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Forgot Password</h1>
+<form method="post">{% csrf_token %}
+  <p>Enter your email to receive reset instructions.</p>
+  {{ form.email }}
+  <button class="button">Send reset</button>
+</form>
+{% endblock %}

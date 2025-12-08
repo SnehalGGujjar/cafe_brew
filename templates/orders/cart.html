@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Your Cart{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="ai-card">
+      <h4 class="mb-3">Cart</h4>
+      <table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+        <tbody>
+        {% for it in order.items.all %}
+          <tr><td>{{ it.item.name }}</td><td>{{ it.qty }}</td><td>₹ {{ it.unit_price }}</td><td>₹ {{ it.subtotal }}</td></tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted">No items yet. Go to <a href="{% url 'menu:today' %}">menu</a>.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="text-end fs-5">Total: <strong>₹ {{ order.total }}</strong></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="ai-card">
+      <h5 class="mb-2">Enter your email</h5>
+      <form method="post">
+        {% csrf_token %}
+        <input class="form-control" type="email" name="email" placeholder="you@example.com" value="{{ order.customer_email }}">
+        <button class="btn btn-success mt-3 w-100">Proceed to Pay</button>
+      </form>
+      <p class="small text-muted mt-2">We will email the bill after payment confirmation.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

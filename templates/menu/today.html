@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Today's Menu{% endblock %}
+
+{% block content %}
+<section class="menu-section py-5">
+  <div class="container">
+
+    <!-- Header Section -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 pb-3 border-bottom">
+      <div class="mb-3 mb-md-0 text-center text-md-start">
+        <h2 class="fw-bold mb-1" style="color: #5c4033;">Today's Menu</h2>
+        <div class="small text-muted">
+          Location: <strong class="text-primary">{{ location_name }}</strong><br>
+          <span class="text-secondary small">Lat: {{ lat }} | Lon: {{ lon }}</span>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <a href="{% url 'orders:start' %}" class="btn btn-outline-success">
+          <i class="fa-solid fa-cart-shopping me-1"></i> Go to Cart
+        </a>
+        <!-- <button id="useLocBtn" class="btn btn-outline-primary">
+          <i class="fa-solid fa-location-crosshairs me-1"></i> Use my location
+        </button> -->
+      </div>
+    </div>
+
+    <!-- Weather Section -->
+    <div class="p-3 mb-4 rounded bg-light border" style="background-color: #f8f1e9;">
+      <small class="text-muted fw-semibold d-block">CURRENT CONDITIONS</small>
+      <h5 class="mb-0 fw-normal">
+        <span class="text-dark">{{ condition|upper }}</span>
+        {% if weather.temperature %}
+          <span class="mx-2 text-secondary">|</span>
+          <i class="fa-solid fa-thermometer-half me-1"></i> {{ weather.temperature|floatformat:1 }}°C
+        {% endif %}
+        {% if weather.precipitation %}
+          <span class="mx-2 text-secondary">|</span>
+          <i class="fa-solid fa-cloud-rain me-1"></i> {{ weather.precipitation|floatformat:1 }} mm
+        {% endif %}
+      </h5>
+    </div>
+
+    <!-- Menu Items Section -->
+    <h4 class="mb-4 pt-3 border-top text-center" style="color: #5c4033;">Available Items</h4>
+    <div class="row g-4">
+      {% for item in items %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm border-0" style="background-color: #fff; border-radius: 10px;">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="fw-bold mb-0" style="color: #5c4033;">{{ item.name }}</h5>
+              <span class="badge bg-primary-subtle text-primary border ms-2 py-2 px-3 fw-semibold rounded-pill">
+                {{ item.get_category_display }}
+              </span>
+            </div>
+            {% if item.rules.all %}
+            <div class="mb-2 small text-muted">
+              <span class="fw-bold text-secondary me-1">Allowed for:</span>
+              {% for r in item.rules.all %}
+                <span class="badge bg-secondary text-white me-1">{{ r.get_condition_display }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <p class="text-muted small mb-3">{{ item.description|default:"No description provided." }}</p>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div class="h4 fw-bolder mb-0" style="color: #d4a373;">₹ {{ item.price }}</div>
+              <form method="post" action="{% url 'orders:add_to_cart' item.id %}" class="d-flex gap-2">
+                {% csrf_token %}
+                <input type="number" name="qty" class="form-control form-control-sm" value="1" min="1" style="max-width: 80px;">
+                <button class="btn btn-sm btn-primary shadow-sm" style="background-color: #d4a373; border-color: #d4a373;">
+                  <i class="fa-solid fa-cart-plus me-1"></i> Add
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="alert alert-warning text-center" style="background-color: #fff3cd; color: #856404;">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i> No items available right now.
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // Same location logic from previous version (detect or manual select)
+  document.getElementById('useLocBtn')?.addEventListener('click', () => {
+    if (!navigator.geolocation){ alert('Geolocation not supported'); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      const form = new FormData(); form.append('lat', lat); form.append('lon', lon);
+      fetch('/core/set-location/', { method: 'POST', headers: { 'X-CSRFToken': getCsrf() }, body: form })
+        .then(r => r.json()).then(j => { if (j.ok){ location.reload(); } else { alert('Failed: ' + (j.error||'unknown')); }} )
+        .catch(e => alert('Network error: ' + e));
+    }, err => alert('Location error: ' + err.message), { enableHighAccuracy: true, timeout: 8000 });
+  });
+
+  function getCsrf(){
+    const m = document.cookie.match(/(?:^|;)\s*csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+</script>
+{% endblock %}
