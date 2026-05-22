@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Display System - CafeBrew</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --text-primary: #f0f0f0;
+            --text-secondary: #aaaaaa;
+            --border-color: #333333;
+            
+            --brand-amber: #c97d2e;
+            --alert-red: #d32f2f;
+            --alert-red-bg: rgba(211, 47, 47, 0.1);
+            
+            --btn-pending: #424242;
+            --btn-prep: #f57c00;
+            --btn-ready: #388e3c;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kds-header {
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .kds-header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--brand-amber);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .kds-container {
+            flex: 1;
+            padding: 20px;
+            overflow-x: auto;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .ticket {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-width: 300px;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .ticket.urgent {
+            border-color: var(--alert-red);
+            box-shadow: 0 0 15px var(--alert-red-bg);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+        }
+
+        .ticket-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ticket-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .ticket-timer {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: #333;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .ticket.urgent .ticket-timer {
+            background: var(--alert-red);
+            color: white;
+        }
+
+        .ticket-body {
+            padding: 0;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .order-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .item-qty {
+            color: var(--brand-amber);
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .status-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-status {
+            flex: 1;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-status:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-status:active { transform: scale(0.95); }
+
+        .btn-pending { background-color: var(--btn-pending); }
+        .btn-prep { background-color: var(--btn-prep); }
+        .btn-ready { background-color: var(--btn-ready); }
+
+        .item-status-pending .btn-pending { opacity: 1; border: 2px solid white; }
+        .item-status-pending .btn-prep { opacity: 0.5; }
+        .item-status-pending .btn-ready { opacity: 0.5; }
+
+        .item-status-preparing .btn-pending { opacity: 0.5; }
+        .item-status-preparing .btn-prep { opacity: 1; border: 2px solid white; }
+        .item-status-preparing .btn-ready { opacity: 0.5; }
+
+        .item-status-ready { opacity: 0.4; }
+
+        .empty-state {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+        .empty-state i { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
+        
+        /* Scrollbar styling for touch devices */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="kds-header">
+        <h1><i class="fa-solid fa-fire-burner"></i> CafeBrew KDS</h1>
+        <div class="time-display" id="clock">00:00:00</div>
+    </div>
+
+    <div class="kds-container" id="ticketContainer">
+        <!-- Tickets rendered via JS -->
+        <div class="empty-state">
+            <i class="fa-solid fa-mug-hot"></i>
+            <div>No active orders. Kitchen is clear!</div>
+        </div>
+    </div>
+
+    <script>
+        // Update live clock
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        const container = document.getElementById('ticketContainer');
+        const URGENT_THRESHOLD = 15; // minutes
+
+        function updateItemStatus(itemId, newStatus) {
+            const fd = new FormData();
+            fd.append('item_id', itemId);
+            fd.append('status', newStatus);
+
+            fetch("{% url 'orders:kds_update_item' %}", {
+                method: 'POST',
+                body: fd
+            })
+            .then(r => r.json())
+            .then(j => {
+                if(j.ok) fetchOrders(); // refresh on success
+            });
+        }
+
+        function renderTickets(orders) {
+            if(orders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-mug-hot"></i>
+                        <div>No active orders. Kitchen is clear!</div>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            orders.forEach(order => {
+                const isUrgent = order.elapsed_mins >= URGENT_THRESHOLD;
+                
+                let itemsHtml = '';
+                order.items.forEach(item => {
+                    if(item.status === 'ready') {
+                        // Keep ready items visible but faded
+                        itemsHtml += `
+                            <div class="order-item item-status-ready">
+                                <div class="item-details">
+                                    <span><span class="item-qty">${item.qty}x</span> ${item.name}</span>
+                                    <i class="fa-solid fa-check text-success" style="color:var(--btn-ready)"></i>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        itemsHtml += `
+                            <div class="order-item item-status-${item.status}">
+                                <div class="item-details mb-2">
+                                    <span><span class="item-qty">${item.qty}x</span> ${item.name}</span>
+                                </div>
+                                <div class="status-actions">
+                                    <button class="btn-status btn-pending" onclick="updateItemStatus(${item.id}, 'pending')">Pending</button>
+                                    <button class="btn-status btn-prep" onclick="updateItemStatus(${item.id}, 'preparing')">Prep</button>
+                                    <button class="btn-status btn-ready" onclick="updateItemStatus(${item.id}, 'ready')">Ready</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                html += `
+                    <div class="ticket ${isUrgent ? 'urgent' : ''}">
+                        <div class="ticket-header">
+                            <div class="ticket-title">${order.table}</div>
+                            <div class="ticket-timer">${order.elapsed_mins}m</div>
+                        </div>
+                        <div class="ticket-body">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function fetchOrders() {
+            fetch("{% url 'orders:kds_api_orders' %}")
+                .then(r => r.json())
+                .then(j => {
+                    renderTickets(j.orders || []);
+                })
+                .catch(e => console.error("KDS Fetch Error:", e));
+        }
+
+        // Poll every 5 seconds
+        fetchOrders();
+        setInterval(fetchOrders, 5000);
+    </script>
+</body>
+</html>

@@ -95,10 +95,10 @@
     <div class="thanks-card">
 
       <!-- Success header -->
-      <div class="thanks-header">
-        <div class="success-icon"><i class="fa-solid fa-check"></i></div>
-        <h2>Order Confirmed!</h2>
-        <p>Your payment has been received. We're preparing your order now.</p>
+      <div class="thanks-header" id="statusHeader">
+        <div class="success-icon" id="statusIcon"><i class="fa-solid fa-check"></i></div>
+        <h2 id="statusTitle">Order Confirmed!</h2>
+        <p id="statusDesc">Your payment has been received. We're sending it to the kitchen.</p>
       </div>
 
       <!-- Body -->
@@ -249,5 +249,41 @@
       fbBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i>Submit Feedback';
     }
   });
+
+  // ── Real-Time Order Status Polling ──────────────────────────
+  const statusHeader = document.getElementById('statusHeader');
+  const statusIcon = document.getElementById('statusIcon');
+  const statusTitle = document.getElementById('statusTitle');
+  const statusDesc = document.getElementById('statusDesc');
+
+  async function pollStatus() {
+    try {
+      const r = await fetch("{% url 'orders:order_status_api' order_id %}");
+      if (!r.ok) return setTimeout(pollStatus, 5000);
+      const data = await r.json();
+
+      if (data.status === 'completed' || data.all_ready) {
+        // Ready for pickup!
+        statusHeader.style.background = 'linear-gradient(135deg, #1976D2, #42A5F5)'; // Blue theme for ready
+        statusIcon.innerHTML = '<i class="fa-solid fa-bell fa-shake"></i>';
+        statusTitle.textContent = 'Your Order is Ready!';
+        statusDesc.textContent = 'Please collect your food from the counter.';
+        return; // Stop polling, it's done
+      } else if (data.any_prep) {
+        // Preparing
+        statusHeader.style.background = 'linear-gradient(135deg, #F57C00, #FFB74D)'; // Orange theme for prep
+        statusIcon.innerHTML = '<i class="fa-solid fa-fire-burner fa-fade"></i>';
+        statusTitle.textContent = 'Preparing...';
+        statusDesc.textContent = 'The chefs are cooking your order right now.';
+      }
+
+      setTimeout(pollStatus, 5000);
+    } catch(e) {
+      setTimeout(pollStatus, 5000);
+    }
+  }
+
+  // Start polling
+  pollStatus();
 </script>
 {% endblock %}

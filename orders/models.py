@@ -14,9 +14,16 @@ class Order(models.Model):
     def __str__(self): return f"Order #{self.id} {self.customer_email} ({self.status})"
 
 class OrderItem(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('preparing', 'Preparing'),
+        ('ready', 'Ready')
+    ]
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     item = models.ForeignKey(Item, on_delete=models.PROTECT)
     qty = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=8, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    prepared_at = models.DateTimeField(null=True, blank=True)
     def subtotal(self): return self.qty * self.unit_price
-    def __str__(self): return f"{self.item.name} x{self.qty}"
+    def __str__(self): return f"{self.item.name} x{self.qty} ({self.status})"

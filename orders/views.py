@@ -108,3 +108,76 @@ def checkout(request):
 
 def thanks(request, order_id):
     return render(request, 'orders/thanks.html', {'order_id': order_id})
+
+# ── KITCHEN DISPLAY SYSTEM (KDS) ─────────────────────────
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import JsonResponse
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+
+@staff_member_required
+def kds_dashboard(request):
+    return render(request, 'orders/kds.html')
+
+@staff_member_required
+def kds_api_orders(request):
+    """Returns active orders (Paid) that have un-ready items"""
+    # Fetch orders that are paid or completed, but have items not 'ready'
+    active_orders = Order.objects.filter(status__in=['paid', 'completed'], items__status__in=['pending', 'preparing']).distinct()
+    
+    data = []
+    for order in active_orders.order_by('created_at'):
+        items = []
+        for item in order.items.all():
+            items.append({
+                'id': item.id,
+                'name': item.item.name,
+                'qty': item.qty,
+                'status': item.status
+            })
+        
+        # calculate elapsed time in minutes
+        delta = timezone.now() - order.created_at
+        elapsed_mins = int(delta.total_seconds() / 60)
+        
+        data.append({
+            'id': order.id,
+            'table': f"Order #{order.id}", # Can be replaced by table code later
+            'elapsed_mins': elapsed_mins,
+            'items': items
+        })
+        
+    return JsonResponse({'orders': data})
+
+@staff_member_required
+@csrf_exempt # Safe enough for staff internal API, but ideally use standard CSRF
+def kds_update_item(request):
+    if request.method == 'POST':
+        item_id = request.POST.get('item_id')
+        new_status = request.POST.get('status')
+        if new_status in dict(OrderItem.STATUS_CHOICES):
+            oi = get_object_or_404(OrderItem, id=item_id)
+            oi.status = new_status
+            if new_status == 'ready':
+                oi.prepared_at = timezone.now()
+            oi.save()
+            return JsonResponse({'ok': True})
+    return JsonResponse({'ok': False}, status=400)
+
+def order_status_api(request, order_id):
+    """Customer-facing API to check the real-time prep status of their order."""
+    order = get_object_or_404(Order, id=order_id)
+    
+    items = order.items.all()
+    all_ready = items.exists() and all(i.status == 'ready' for i in items)
+    any_prep = any(i.status == 'preparing' for i in items)
+    
+    if all_ready and order.status == 'paid':
+        order.status = 'completed'
+        order.save(update_fields=['status'])
+        
+    return JsonResponse({
+        'status': order.status,
+        'all_ready': all_ready,
+        'any_prep': any_prep
+    })

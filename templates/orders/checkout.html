@@ -166,7 +166,10 @@
           </li>
           <li>
             <span class="step-num">3</span>
-            Ask a staff member to confirm, and you're done!
+            Ask a staff member to confirm, or for testing:
+            <button onclick="simulatePayment()" class="btn-brew-outline btn btn-sm mt-2" style="display:block; width:100%;">
+              <i class="fa-solid fa-bolt text-warning me-1"></i> Simulate Payment (Dev)
+            </button>
           </li>
         </ul>
 
@@ -229,6 +232,23 @@
       setTimeout(poll, 5000);
     }
   }
+
+  function simulatePayment() {
+    const btn = event.currentTarget;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Processing...';
+    btn.disabled = true;
+    
+    fetch("{% url 'payments:simulate_payment' payment.uuid %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrf() }
+    })
+    .catch(e => {
+        alert("Failed to simulate payment.");
+        btn.disabled = false;
+        btn.innerHTML = 'Simulate Payment (Dev)';
+    });
+  }
+
   poll();
 </script>
 {% endblock %}

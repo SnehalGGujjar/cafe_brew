@@ -80,3 +80,23 @@ def mark_failed(request, uuid):
 
     messages.warning(request, f"Payment marked as failed for Order #{order.id}. Order reopened.")
     return redirect('admin:payments_payment_changelist')
+
+@require_POST
+def simulate_payment(request, uuid):
+    """Dev/Testing bypass to simulate a successful payment without staff login"""
+    payment = get_object_or_404(Payment, uuid=uuid)
+    order = payment.order
+
+    payment.status = 'confirmed'
+    payment.confirmed_at = timezone.now()
+    payment.save(update_fields=['status', 'confirmed_at'])
+
+    order.status = 'paid'
+    order.recalc_total()
+    order.save(update_fields=['status', 'total'])
+
+    if request.session.get('order_id') == order.id:
+        try: del request.session['order_id']
+        except KeyError: pass
+
+    return JsonResponse({'ok': True})
