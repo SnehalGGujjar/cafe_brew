@@ -58,3 +58,21 @@ class SitePayment(models.Model):
     def get_solo(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+class AIConfiguration(models.Model):
+    """Singleton to store global AI states for CafeBrew."""
+    dynamic_pricing_enabled = models.BooleanField(default=False)
+    surge_multiplier = models.DecimalField(max_digits=4, decimal_places=2, default=1.00)
+    last_inventory_order = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return "AI Configuration"
+        
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

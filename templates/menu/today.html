@@ -199,6 +199,80 @@
 
   /* condition → emoji map */
   .cond-icon { font-size: 1.1rem; }
+
+  /* ── AI Concierge Floating UI ── */
+  .ai-fab {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+    cursor: pointer; z-index: 1000;
+    transition: var(--transition);
+  }
+  .ai-fab:hover { transform: scale(1.1); }
+  
+  .ai-chat-window {
+    position: fixed;
+    bottom: 5.5rem; right: 2rem;
+    width: 340px; height: 450px;
+    background: var(--brand-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    display: flex; flex-direction: column;
+    z-index: 999;
+    transform: translateY(20px);
+    opacity: 0; pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .ai-chat-window.active {
+    transform: translateY(0);
+    opacity: 1; pointer-events: all;
+  }
+  .ai-header {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white; padding: 1rem;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+  }
+  .ai-close { cursor: pointer; opacity: 0.8; transition: 0.2s; }
+  .ai-close:hover { opacity: 1; }
+  .ai-messages {
+    flex: 1; padding: 1rem; overflow-y: auto;
+    display: flex; flex-direction: column; gap: .75rem;
+    background: var(--bg-color);
+  }
+  .msg { padding: .65rem .85rem; border-radius: 12px; font-size: .9rem; max-width: 85%; }
+  .msg-ai { background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.2); align-self: flex-start; color: var(--text-primary); border-bottom-left-radius: 2px; }
+  .msg-user { background: var(--brand-amber); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+  
+  .ai-input-area {
+    padding: 1rem; border-top: 1px solid var(--border-color);
+    display: flex; gap: .5rem; background: var(--brand-card);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+  .ai-input {
+    flex: 1; border: 1px solid var(--border-color); border-radius: 20px;
+    padding: .4rem .8rem; font-size: .9rem; outline: none; background: var(--bg-color); color: var(--text-primary);
+  }
+  .ai-input:focus { border-color: #2ecc71; }
+  .ai-send {
+    background: #2ecc71; color: white; border: none; border-radius: 50%;
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: 0.2s;
+  }
+  .ai-send:hover { background: #27ae60; }
+  
+  .ai-add-btn {
+    display: block; margin-top: .5rem;
+    background: linear-gradient(135deg, var(--brand-amber), var(--brand-gold));
+    color: white; text-align: center; padding: .4rem; border-radius: 6px;
+    font-size: .85rem; font-weight: 600; text-decoration: none; border: none; cursor: pointer; width: 100%;
+  }
 </style>
 {% endblock %}
 
@@ -295,7 +369,7 @@
             <div class="menu-card-name">{{ item.name }}</div>
             <div class="menu-card-desc">{{ item.description|default:"No description." }}</div>
             <div class="menu-card-footer">
-              <div class="price-tag">₹{{ item.price }}</div>
+              <div class="price-tag">₹{{ item.display_price }}</div>
               <form class="add-form" method="post" action="{% url 'orders:add_to_cart' item.id %}">
                 {% csrf_token %}
                 <input type="number" name="qty" class="qty-input" value="1" min="1" max="20" aria-label="Quantity">
@@ -321,6 +395,25 @@
   </div>
 </section>
 <!-- ╚═══════════════════════════════════════════════════════╝ -->
+
+<!-- AI Concierge UI -->
+<div class="ai-fab" id="aiFab">
+  <i class="fa-solid fa-sparkles"></i>
+</div>
+
+<div class="ai-chat-window" id="aiChat">
+  <div class="ai-header">
+    <div><i class="fa-solid fa-robot me-2"></i> AI Menu Concierge</div>
+    <div class="ai-close" id="aiClose"><i class="fa-solid fa-times"></i></div>
+  </div>
+  <div class="ai-messages" id="aiMsgs">
+    <div class="msg msg-ai">Hi! I'm the CafeBrew AI. What are you in the mood for today? (e.g. "I want something cold and vegan")</div>
+  </div>
+  <form class="ai-input-area" id="aiForm">
+    <input type="text" class="ai-input" id="aiInput" placeholder="Ask the AI..." autocomplete="off">
+    <button type="submit" class="ai-send"><i class="fa-solid fa-paper-plane"></i></button>
+  </form>
+</div>
 
 {% endblock %}
 
@@ -437,5 +530,67 @@
       .finally(() => { citySelect.disabled = false; });
     });
   }
+  // ── AI Concierge Interaction ───────────────────────────
+  const aiFab = document.getElementById('aiFab');
+  const aiChat = document.getElementById('aiChat');
+  const aiClose = document.getElementById('aiClose');
+  const aiForm = document.getElementById('aiForm');
+  const aiInput = document.getElementById('aiInput');
+  const aiMsgs = document.getElementById('aiMsgs');
+
+  aiFab.addEventListener('click', () => { aiChat.classList.add('active'); aiInput.focus(); });
+  aiClose.addEventListener('click', () => aiChat.classList.remove('active'));
+
+  function addMsg(text, type, extraHtml='') {
+    const d = document.createElement('div');
+    d.className = `msg msg-${type}`;
+    d.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') + extraHtml;
+    aiMsgs.appendChild(d);
+    aiMsgs.scrollTop = aiMsgs.scrollHeight;
+  }
+
+  aiForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const msg = aiInput.value.trim();
+    if (!msg) return;
+    
+    addMsg(msg, 'user');
+    aiInput.value = '';
+    
+    // Typing indicator
+    const typingId = 'typing-' + Date.now();
+    addMsg('<i class="fa-solid fa-ellipsis fa-fade"></i>', 'ai');
+    aiMsgs.lastChild.id = typingId;
+
+    fetch("{% url 'menu:ai_chat' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ message: msg })
+    })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById(typingId).remove();
+      if (data.ok) {
+        let extra = '';
+        if (data.item_id) {
+          extra = `
+            <form method="post" action="/orders/add/${data.item_id}/" style="margin-top:.5rem;">
+              <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrf()}">
+              <input type="hidden" name="qty" value="1">
+              <button type="submit" class="ai-add-btn">Add to Cart (₹${data.item_price})</button>
+            </form>
+          `;
+        }
+        addMsg(data.text, 'ai', extra);
+      } else {
+        addMsg("Oops, my brain is offline.", 'ai');
+      }
+    })
+    .catch(err => {
+      document.getElementById(typingId).remove();
+      addMsg("Connection error.", 'ai');
+    });
+  });
+
 </script>
 {% endblock %}

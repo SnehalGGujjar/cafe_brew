@@ -7,6 +7,7 @@ class Order(models.Model):
     customer_email = models.EmailField()
     created_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=16, choices=STATUS, default='cart')
+    weather_condition = models.CharField(max_length=50, null=True, blank=True, help_text="Weather condition at the time of order")
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     def recalc_total(self):
         total = sum([oi.subtotal() for oi in self.items.all()])

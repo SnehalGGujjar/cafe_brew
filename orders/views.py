@@ -157,9 +157,17 @@ def kds_update_item(request):
         new_status = request.POST.get('status')
         if new_status in dict(OrderItem.STATUS_CHOICES):
             oi = get_object_or_404(OrderItem, id=item_id)
-            oi.status = new_status
-            if new_status == 'ready':
+            
+            # Deduct inventory ONLY if transitioning to 'ready' for the first time
+            if new_status == 'ready' and oi.status != 'ready':
                 oi.prepared_at = timezone.now()
+                from inventory.models import InventoryItem
+                inv = InventoryItem.objects.filter(item=oi.item).first()
+                if inv:
+                    inv.stock = max(0, inv.stock - oi.qty)
+                    inv.save()
+            
+            oi.status = new_status
             oi.save()
             return JsonResponse({'ok': True})
     return JsonResponse({'ok': False}, status=400)

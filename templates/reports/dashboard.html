@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Reports Dashboard{% endblock %}
+{% block title %}Predictive Analytics - CafeBrew{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -44,6 +44,21 @@
   }
   .kpi-label { font-size: .8rem; color: var(--text-muted); margin-top: .3rem; font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
 
+  /* AI Insight Panel */
+  .insight-panel {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(46, 204, 113, 0.05));
+    border-left: 4px solid #2ecc71;
+    padding: 1.75rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-bottom: 2rem;
+    animation: fadeInUp .5s ease both;
+  }
+  .insight-panel h3 { color: #2ecc71; font-size: 1.2rem; margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+  .insight-item { display: flex; gap: 1rem; margin-bottom: 1rem; }
+  .insight-item:last-child { margin-bottom: 0; }
+  .insight-icon { color: #2ecc71; font-size: 1.2rem; margin-top: 2px; }
+  .insight-text { font-size: 1.05rem; color: var(--text-primary); line-height: 1.5; }
+
   /* Chart cards */
   .chart-card {
     background: var(--brand-card);
@@ -52,6 +67,7 @@
     padding: 1.75rem;
     box-shadow: var(--shadow-sm);
     animation: fadeInUp .4s ease both;
+    height: 100%;
   }
   .chart-card-title {
     font-weight: 700; font-size: 1rem; color: var(--text-primary);
@@ -59,31 +75,40 @@
   }
   .chart-card-title i { color: var(--brand-amber); }
 
-  /* Top items list */
-  .top-item-row {
-    display: flex; align-items: center; gap: .75rem;
-    padding: .65rem 0; border-bottom: 1px solid var(--border-color);
+  .chart-container { position: relative; height: 280px; width: 100%; }
+
+  /* AI Toggle Switch */
+  .ai-toggle-box {
+    background: var(--brand-card);
+    border: 1px solid var(--brand-amber);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem;
   }
-  .top-item-row:last-child { border-bottom: none; }
-  .top-rank {
-    width: 28px; height: 28px;
-    background: linear-gradient(135deg, var(--brand-amber), var(--brand-gold));
-    color: #fff; font-weight: 800; font-size: .75rem;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+  .toggle-switch {
+    position: relative; width: 50px; height: 26px;
   }
-  .top-rank.silver { background: linear-gradient(135deg, #aaa, #ccc); }
-  .top-rank.bronze { background: linear-gradient(135deg, #cd7f32, #e0a060); }
-  .top-item-name  { flex: 1; font-weight: 600; font-size: .9rem; }
-  .top-item-qty   { color: var(--text-muted); font-size: .85rem; font-weight: 500; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc; transition: .4s; border-radius: 34px;
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+    background-color: white; transition: .4s; border-radius: 50%;
+  }
+  input:checked + .slider { background-color: #2ecc71; }
+  input:checked + .slider:before { transform: translateX(24px); }
+  
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="reports-page">
   <div class="container">
-    <h1 class="page-heading"><i class="fa-solid fa-chart-line me-2 text-brew"></i>Sales Reports</h1>
-    <p class="page-sub">Revenue and order performance — all time</p>
+    <h1 class="page-heading"><i class="fa-solid fa-brain me-2 text-brew"></i>Predictive Analytics</h1>
+    <p class="page-sub">AI-powered insights based on {{ total_orders }} historical orders</p>
 
     <!-- KPI Row -->
     <div class="row g-3 mb-4">
@@ -91,7 +116,7 @@
         <div class="kpi-card">
           <div class="kpi-icon"><i class="fa-solid fa-receipt"></i></div>
           <div class="kpi-value">{{ total_orders }}</div>
-          <div class="kpi-label">Total Orders</div>
+          <div class="kpi-label">Total Orders Analyzed</div>
         </div>
       </div>
       <div class="col-6 col-lg-3">
@@ -99,87 +124,86 @@
           <div class="kpi-icon" style="background:rgba(46,204,113,.1);color:#2ecc71;">
             <i class="fa-solid fa-indian-rupee-sign"></i>
           </div>
-          <div class="kpi-value">₹{{ revenue }}</div>
+          <div class="kpi-value">₹{{ revenue|floatformat:0 }}</div>
           <div class="kpi-label">Total Revenue</div>
         </div>
       </div>
       <div class="col-6 col-lg-3">
         <div class="kpi-card">
-          <div class="kpi-icon"><i class="fa-solid fa-star"></i></div>
-          <div class="kpi-value">{{ top_labels|length }}</div>
-          <div class="kpi-label">Top Items Tracked</div>
+          <div class="kpi-icon"><i class="fa-solid fa-cloud-sun"></i></div>
+          <div class="kpi-value">30</div>
+          <div class="kpi-label">Days Weather Data</div>
         </div>
       </div>
       <div class="col-6 col-lg-3">
         <div class="kpi-card">
           <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
           <div class="kpi-value">Live</div>
-          <div class="kpi-label">Data Freshness</div>
+          <div class="kpi-label">Prediction Engine</div>
         </div>
       </div>
     </div>
 
+    <!-- AI Pricing Toggle -->
+    <div class="ai-toggle-box">
+      <div>
+        <h4 style="margin:0; font-size:1.1rem; color:var(--text-primary);"><i class="fa-solid fa-robot text-brew"></i> Dynamic Pricing AI</h4>
+        <p style="margin:0; font-size:0.9rem; color:var(--text-muted);">Automatically increases prices by 15% during heavy simulated volume rushes.</p>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="aiPricingToggle" {% if ai_config.dynamic_pricing_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- AI Insights Panel -->
+    {% if insights %}
+    <div class="insight-panel">
+      <h3><i class="fa-solid fa-lightbulb"></i> Actionable Business Insights</h3>
+      {% for insight in insights %}
+      <div class="insight-item">
+        <div class="insight-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="insight-text">{{ insight }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Charts Row -->
-    <div class="row g-4">
-
-      <!-- Top Items Bar Chart -->
-      <div class="col-lg-7">
+    <div class="row g-4 mb-4">
+      
+      <!-- Busiest Hours Line Chart -->
+      <div class="col-lg-12">
         <div class="chart-card">
           <div class="chart-card-title">
-            <i class="fa-solid fa-chart-bar"></i> Top Selling Items
+            <i class="fa-solid fa-clock"></i> Hourly Order Volume (Staffing Predictor)
           </div>
-          <canvas id="topItemsChart" height="220"></canvas>
+          <div class="chart-container" style="height: 300px;">
+            <canvas id="hourlyChart"></canvas>
+          </div>
         </div>
       </div>
 
-      <!-- Top Items ranked list -->
-      <div class="col-lg-5">
+      <!-- Revenue vs Weather Bar Chart -->
+      <div class="col-lg-6">
         <div class="chart-card">
           <div class="chart-card-title">
-            <i class="fa-solid fa-trophy"></i> Leaderboard
+            <i class="fa-solid fa-cloud-sun-rain"></i> Revenue vs Weather Conditions
           </div>
-          {% for label, val in top_pairs %}
-          <div class="top-item-row">
-            <div class="top-rank {% if forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% elif forloop.counter > 3 %}{% endif %}">
-              {{ forloop.counter }}
-            </div>
-            <div class="top-item-name">{{ label }}</div>
-            <div class="top-item-qty">{{ val }} sold</div>
+          <div class="chart-container">
+            <canvas id="weatherChart"></canvas>
           </div>
-          {% empty %}
-          <p class="text-muted text-center py-3">No data yet.</p>
-          {% endfor %}
         </div>
       </div>
 
-      <!-- Revenue Pie (placeholder chart) -->
-      <div class="col-lg-5">
+      <!-- Top Items Doughnut Chart -->
+      <div class="col-lg-6">
         <div class="chart-card">
           <div class="chart-card-title">
-            <i class="fa-solid fa-chart-pie"></i> Sales Breakdown
+            <i class="fa-solid fa-chart-pie"></i> Top Selling Items All-Time
           </div>
-          <canvas id="pieChart" height="240"></canvas>
-        </div>
-      </div>
-
-      <!-- Summary stats -->
-      <div class="col-lg-7">
-        <div class="chart-card h-100">
-          <div class="chart-card-title">
-            <i class="fa-solid fa-circle-info"></i> Summary
-          </div>
-          <p class="text-muted" style="font-size:.9rem;line-height:1.7">
-            This dashboard tracks all-time sales from completed and paid orders.
-            Visit the <a href="/admin/analytics/" style="color:var(--brand-amber);font-weight:600;">Admin Analytics</a>
-            page for a 30-day breakdown with daily trends.
-          </p>
-          <div class="mt-3">
-            <a href="/admin/analytics/" class="btn-brew btn me-2">
-              <i class="fa-solid fa-gauge me-1"></i>Admin Analytics
-            </a>
-            <a href="/admin/" class="btn-brew-outline btn">
-              <i class="fa-solid fa-sliders me-1"></i>Admin Panel
-            </a>
+          <div class="chart-container">
+            <canvas id="pieChart"></canvas>
           </div>
         </div>
       </div>
@@ -192,73 +216,145 @@
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script>
-  const labels = {{ top_labels|safe }};
-  const values = {{ top_values|safe }};
+  // Data passed from backend
+  const topLabels = {{ top_labels|safe }};
+  const topValues = {{ top_values|safe }};
+  
+  const weatherLabels = {{ weather_labels|safe }};
+  const weatherValues = {{ weather_values|safe }};
+  
+  const hoursLabels = {{ hours|safe }};
+  const hoursCounts = {{ hour_counts|safe }};
 
-  const BREW_COLORS = [
-    '#c97d2e','#e8a94c','#6b3f1f','#a0522d','#d2691e',
-  ];
-  const BREW_LIGHT = BREW_COLORS.map(c => c + '33');
+  const BREW_COLORS = ['#c97d2e','#e8a94c','#6b3f1f','#a0522d','#d2691e'];
+  const WEATHER_COLORS = {
+    'Sunny': '#F5B041',
+    'Cloudy': '#85C1E9',
+    'Rainy': '#3498DB'
+  };
 
   Chart.defaults.font.family = "'Inter', sans-serif";
-  Chart.defaults.color = '#6b5744';
+  Chart.defaults.color = '#fff'; // For dark mode
+  Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.05)';
 
-  // ── Bar Chart ─────────────────────────────────────────
-  const barCtx = document.getElementById('topItemsChart').getContext('2d');
-  new Chart(barCtx, {
+  // ── Hourly Staffing Chart (Line) ──────────────────────
+  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  
+  // Create a gradient for the line chart
+  let gradient = hourlyCtx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(201, 125, 46, 0.5)');
+  gradient.addColorStop(1, 'rgba(201, 125, 46, 0.0)');
+
+  new Chart(hourlyCtx, {
+    type: 'line',
+    data: {
+      labels: hoursLabels,
+      datasets: [{
+        label: 'Total Orders',
+        data: hoursCounts,
+        borderColor: '#c97d2e',
+        backgroundColor: gradient,
+        borderWidth: 3,
+        pointBackgroundColor: '#e8a94c',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // ── Revenue vs Weather Chart (Bar) ──────────────────────
+  const weatherCtx = document.getElementById('weatherChart').getContext('2d');
+  
+  // Map colors based on weather
+  const barColors = weatherLabels.map(w => WEATHER_COLORS[w] || '#c97d2e');
+
+  new Chart(weatherCtx, {
     type: 'bar',
     data: {
-      labels: labels,
+      labels: weatherLabels,
       datasets: [{
-        label: 'Units Sold',
-        data: values,
-        backgroundColor: BREW_COLORS.slice(0, labels.length),
-        borderColor: BREW_COLORS.slice(0, labels.length),
+        label: 'Revenue (₹)',
+        data: weatherValues,
+        backgroundColor: barColors,
         borderWidth: 0,
         borderRadius: 6,
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => ` ${ctx.parsed.y} units sold`
+            label: ctx => ` ₹${ctx.parsed.y.toLocaleString()}`
           }
         }
       },
       scales: {
-        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' } },
+        y: { beginAtZero: true },
         x: { grid: { display: false } }
       }
     }
   });
 
-  // ── Pie Chart ─────────────────────────────────────────
+  // ── Top Items Chart (Doughnut) ─────────────────────────
   const pieCtx = document.getElementById('pieChart').getContext('2d');
   new Chart(pieCtx, {
     type: 'doughnut',
     data: {
-      labels: labels,
+      labels: topLabels,
       datasets: [{
-        data: values,
-        backgroundColor: BREW_COLORS.slice(0, labels.length),
-        borderColor: '#fff',
+        data: topValues,
+        backgroundColor: BREW_COLORS.slice(0, topLabels.length),
+        borderColor: '#1e1e1e', // Dark background color to act as border
         borderWidth: 3,
         hoverOffset: 8,
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       cutout: '62%',
       plugins: {
         legend: {
           position: 'right',
-          labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10 }
+          labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10, color: '#fff' }
         }
       }
     }
   });
+  
+  // ── AI Pricing Toggle ──────────────────────────────
+  const toggleBtn = document.getElementById('aiPricingToggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('change', function() {
+      fetch("{% url 'reports:toggle_pricing_ai' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrf() }
+      })
+      .then(r => r.json())
+      .then(j => {
+        if (j.ok) {
+          if (j.enabled) {
+            alert(`Dynamic Pricing Enabled! Surge multiplier is now ${j.multiplier}x. Prices on the menu have updated.`);
+          } else {
+            alert(`Dynamic Pricing Disabled. Prices have returned to normal.`);
+          }
+        }
+      });
+    });
+  }
 </script>
 {% endblock %}

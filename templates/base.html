@@ -284,6 +284,16 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}" href="{% url 'reports:dashboard' %}">
+              <i class="fa-solid fa-chart-line me-1"></i> Reports
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.app_name == 'inventory' %}active{% endif %}" href="{% url 'inventory:forecast' %}">
+              <i class="fa-solid fa-boxes-stacked me-1"></i> Inventory
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="{% url 'orders:start' %}">
               <i class="fa-solid fa-cart-shopping me-1"></i>Cart
             </a>
